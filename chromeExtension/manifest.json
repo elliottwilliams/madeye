@@ -1,0 +1,26 @@
+{ "name": "Tone Tinter"
+, "description": "Color you ass if it's brash or crass"
+, "version": "2.0"
+, "permissions": 
+    [ 
+    ]
+, "background": 
+    { "scripts": ["background.js"]
+    , "persistent": false
+    }
+, "content_scripts": 
+    [ { "matches": 
+          [ "https://www.google.com/*"
+          , "https://*/*"
+          , "http://*/*"
+          ]
+      , "js": ["toneTinter.js"]
+      , "run_at": "document_idle"
+      }
+    ]
+, "browser_action":
+    { "default_title": "Annotate Documents by Tone"
+    , "default_popup": "popup.html"
+    }
+, "manifest_version": 2
+}
