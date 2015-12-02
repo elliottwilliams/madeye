@@ -7,6 +7,31 @@ var toneClass =
   };
 
 
+function fetchTone(callback){
+  var http = new XMLHttpRequest();
+  var url = "http://tone-analyzer-cs252.mybluemix.net/mood";
+  // var params = 'text=' 
+  //   + encodeURI("I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours");
+  var params = 'text=what+the+fuck';
+  http.open("POST", url, true);
+
+  //Send the proper header information along with the request
+  //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  //http.setRequestHeader("text", 
+  //    "I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours");
+  http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  http.onreadystatechange = function() {//Call a function when the state changes.
+    if(http.readyState == 4 && http.status == 200) {
+      alert(http.responseText);
+      //callback();
+    }
+  }
+  http.send(params);
+}
+
+fetchTone(function(){});
+
 var regularPage = 
   { matches: function(node){
       // alert(node.nodeName);
