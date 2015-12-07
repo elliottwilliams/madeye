@@ -2,7 +2,7 @@
 , "description": "Color you ass if it's brash or crass"
 , "version": "2.0"
 , "permissions": 
-    [ 
+    [ "http://tone-analyzer-cs252.mybluemix.net/*"
     ]
 , "background": 
     { "scripts": ["background.js"]
