@@ -89,8 +89,6 @@ $(document).ready(function() {
      * matched with LIWC categories;
      */
     var text = $text.val();
-    
-    $('.output-div')[0].scrollIntoView(true); // Boolean arguments
 
     /*$.post('/mood', {'text': text })
       .done(function(response) {
@@ -100,26 +98,22 @@ $(document).ready(function() {
       .always (function(){
         $loading.hide();
         // scroll to bottom
-        $('.output-div')[0].scrollIntoView(true); // Boolean arguments
+        //$('.output-div')[0].scrollIntoView(true); // Boolean arguments
 
       });*/
     $.post('/tone', {'text': text })
       .done(function(response) {
-        // save the json response in the JSON tab
-        $jsonTab.html(JSON.stringify(response, null, 2));
 
         //prepare the data
         processData(response);
         response.id = 'root';
         CURRENT_TONE = response;
+        // do the visualizations at the bottom
         doToneCheck(response, text);
       })
       .fail(onAPIError)
       .always (function(){
         $loading.hide();
-        // scroll to bottom
-        $('.output-div')[0].scrollIntoView(true); // Boolean arguments
-
       });
   });
 
@@ -155,8 +149,7 @@ $(document).ready(function() {
     // normalize text
     var analyzedHtmlText = analyzedText.replace(/\r\n/g, '<br />').replace(/[\r\n]/g, '<br />');
 
-    // call visualization component
-
+    // this makes the colorful bar -- everything but this line takes care of the colorful text ********
     mainViz.datum(toneResponse).call(toneGenomeViz);
 
     // add higlight span html tags for all matched words:
@@ -183,18 +176,7 @@ $(document).ready(function() {
       $('.' + ele + ".replaceable").css('background-color', COLOR_SCHEMA[cateName]);
       $('.' + ele + ".replaceable").css('color', 'white');
     });
-
-    $('.matched-word').mouseover(function() {
-      highlightToneGenome($(this).attr('categories'));
-    });
-
-    $('.matched-word').mouseout(function() {
-      unhighlightToneGenome($(this).attr('categories'));
-    });
-
-    setupSynonymExpansion();
   }
-
 
   function addPropertySpan(data, search, stylecls) {
     var searchRgp = new RegExp('\\b(' + (search) + ')\\b', 'gi');
@@ -214,268 +196,6 @@ $(document).ready(function() {
     }
 
     return data.replace(searchRgp, replacer);
-  }
-
-  /**
-   * A function to get the context (array and idx) of a word in a text
-   * @param  {String} word  the word to search
-   * @param  {int} offset
-   * @return {Object}       context array and offset
-   */
-  function getContext(word, offset) {
-    var result = { context: [], offset: -1 },
-      data = CURRENT_TEXT,
-      pref = [],
-      suf = [],
-      contextHops = 2;
-
-    //a reg exp alphanumeric, space or tab
-    var charWithSpaceReg = /[\w\s\t]/i,
-      wordBreakerReg = /[\s\t]/i;
-
-    if (data !== null && data.length > 1) {
-      var token = '';
-      var counter = 0;
-      var c = 0;
-      //search prefix context:
-      if (offset > 0) {
-        var i = offset - 1;
-        counter = 0;
-        c = data.charAt(i);
-        while (i >= 0 && counter < contextHops && (charWithSpaceReg.exec(c) !== null)) {
-          if (wordBreakerReg.exec(c) !== null && token.length > 0) {
-            pref.unshift(token);
-            counter++;
-            token = '';
-          }
-          if (wordBreakerReg.exec(c) === null) token = c + token;
-          c = data.charAt(--i);
-        }
-      }
-      token = '';
-      //serarch suffix context:
-      if (offset < (data.length - word.length)) {
-        var j = parseInt(offset) + parseInt(word.length);
-        counter = 0;
-        c = data.charAt(j);
-        while (j <= (data.length - 1) &&
-          counter < contextHops &&
-          (charWithSpaceReg.exec(c) !== null)) {
-
-          if (wordBreakerReg.exec(c) !== null && token.length > 0) {
-            suf.push(token);
-            counter++;
-            token = '';
-          }
-          if (wordBreakerReg.exec(c) === null) token = token.concat(c);
-          c = data.charAt(++j);
-        }
-      }
-    }
-
-    if (pref.length > 0 || suf.length > 0)
-      result.context = pref.concat([word], suf);
-    result.offset = pref.length;
-
-    return result;
-  }
-
-  function setupSynonymExpansion() {
-    // on synonym word click
-    $('.matched-word').click(function(event) {
-      var _this = $(this);
-      var cates = _this.attr('categories'),
-        offset = _this.attr('offset'),
-        word = _this.html().toLowerCase();
-
-      if ($(this).hasClass('suggested')) {
-        event.preventDefault();
-        _this.popover('disable');
-        return;
-      }
-
-      word = (word === 'challenges' ? 'challenge' : word);
-
-      //clean other pop-ups
-      $('.pop').popover('hide')
-        .removeClass('pop');
-      //get the context of this word:
-      var cntxt = getContext(word, offset);
-
-      $.ajax({
-        type: 'GET',
-        data: {
-          word: word,
-          limit: SYNONYM_LIMITS,
-          context: cntxt.context.join(' '),
-          index: cntxt.offset, 
-          hops: SYNONYM_HOPS
-        },
-        url: 'synonyms',
-        dataType: 'json',
-        contentType: 'application/json',
-        success: function(response) {
-          $error.hide();
-          processSynonym(response, cates);
-        },
-        error: onAPIError
-      });
-
-      function processSynonym(response, cates) {
-        var allSyns = response.synonyms;
-        var $synonymTab   = $('#synonymTabs'),
-          $synonymContent = $('#synonymTabContent');
-
-        //clean the content first:
-        $synonymContent.empty();
-        $synonymTab.empty();
-
-
-        //get synonym list for current categories
-        var curTraitSyns = [];
-        allSyns.forEach(function(e) {
-          if (cates.toLowerCase().indexOf(e.trait.toLowerCase()) >= 0) curTraitSyns.push(e);
-        });
-
-        if (!curTraitSyns.length) {
-          _this.popover({
-            title: '<p>No synonyms available for ' + '<strong>' + word + '</strong></p>',
-            placement: 'bottom',
-            content: $('#synonymDiv').html(),
-            html:true,
-          });
-
-          //show the popover
-          _this.popover('show').addClass('pop');
-
-          $('#closePopover').click(function() {
-            _this.popover('hide')
-              .removeClass('pop');
-          });
-
-          $('.popover')[0].scrollIntoView();
-          return;
-        }
-
-        curTraitSyns.forEach(function(ele) {
-          var existingSyns = [],
-            tabNaviTempl = '<li role="presentation"><a href="#TRAIT_ID_TO_REPLACE" aria-controls="TRAIT_ID_TO_REPLACE" role="tab" data-toggle="tab">TRAIT_ID_TO_REPLACE</a></li>',
-            tabContentTempl = '<div role="tabpanel" class="tab-pane" id="TRAIT_ID_TO_REPLACE">TAB_CONTENT_TO_REPLACE</div>';
-
-          //generate tab nav
-          $synonymTab.append(tabNaviTempl.replace(/TRAIT_ID_TO_REPLACE/g, ele.trait));
-
-          //generate tab content
-          var synsListTempl = '<div class="list-group">LIST_CONTENT_TO_REPLACE</div>',
-            synsListItemTempl = '<a class="list-group-item synonym-list-item" > <span class="badge badge-hidden">SYNONYM_WEIGHT</span>SYNONYM_CONTENT</a>',
-            synsListItemContent = '',
-            synsListGroup = '';
-
-          ele.synonyms.forEach(function(syn) {
-            if (existingSyns.indexOf(syn.word) < 0) {
-              existingSyns.push(syn.word);
-              synsListItemContent += synsListItemTempl
-                .replace(/SYNONYM_CONTENT/g, syn.word)
-                .replace(/SYNONYM_WEIGHT/g, syn.weight.toFixed(2));
-            }
-          });
-
-          synsListGroup = synsListTempl.replace(/LIST_CONTENT_TO_REPLACE/g, synsListItemContent);
-
-          $synonymContent.append(tabContentTempl
-            .replace(/TRAIT_ID_TO_REPLACE/g, ele.trait)
-            .replace(/TAB_CONTENT_TO_REPLACE/g, synsListGroup));
-        });
-
-        _this.popover({
-          html: true,
-          title: '<p>Suggested synonyms for ' + '<strong>' + word + '</strong> :</p>',
-          content: $('#synonymDiv').html(),
-          placement: 'bottom'
-        });
-        //show the popover
-        _this.popover('show').addClass('pop');
-        //show the first tab by default
-        $('#synonymTabs a:first').tab('show');
-
-        $('.badge').each(function() {
-          if (parseFloat($(this).html()) < 0) $(this).attr('class', 'badge badge-hidden badge-neg');
-        });
-
-        $('.synonym-list-item').click(function() {
-          var synSelected = $(this).clone() //clone the element
-            .children() //select all the children
-            .remove() //remove all the children
-            .end() //again go back to selected element
-            .text();
-          $('div.modal-body').html('Are you sure you want to replace <strong>' + word +
-            '</strong> with <strong>' + synSelected +
-            '</strong>?');
-
-          $('#useSynModal').modal('show');
-          $('#confirmUseSyn').click(function() {
-            $('#useSynModal').modal('hide');
-            _this.attr('orgWord', word);
-            _this.css('background-color', '#ddd');
-            _this.css('color', 'black');
-            _this.addClass('suggested');
-            _this.html(synSelected);
-            _this.popover('hide').removeClass('pop');
-          });
-
-        });
-
-        _this[0].scrollIntoView();
-
-        $('#closePopover').click(function() {
-          _this.popover('hide')
-            .removeClass('pop');
-        });
-      } //processSynonym
-    });
-  }
-
-  function highlightToneGenome(_cates) {
-    var trait_cates = _cates.trim().split(' ');
-
-    d3.select(vizId).selectAll('.g-block')
-      .filter(function(sel) {
-        // not in both positive(WORD_TRAIT_CORR_TYPE.positive) or
-        // negative(WORD_TRAIT_CORR_TYPE.negative) categories
-        return ($.inArray(sel.id + '_' + WORD_TRAIT_CORR_TYPE.positive, trait_cates) === -1) &&
-        ($.inArray(sel.id + '_' + WORD_TRAIT_CORR_TYPE.negative, trait_cates) === -1) ? true : false;
-      })
-    .transition()
-      .duration(HIGHLIGHT_ANIMATION_DURATION)
-      .style('opacity', 0.1);
-
-    d3.select(vizId).selectAll('.g-block-mixed-child')
-      .filter(function(sel) {
-        var _this = d3.select(this);
-
-        if (($.inArray(sel.id + '_' + WORD_TRAIT_CORR_TYPE.negative, trait_cates) !== -1) &&
-          (_this.attr('corr') === WORD_TRAIT_CORR_TYPE.negative)) return false;
-
-        if (($.inArray(sel.id + '_' + WORD_TRAIT_CORR_TYPE.positive, trait_cates) !== -1) &&
-          (_this.attr('corr') === WORD_TRAIT_CORR_TYPE.positive)) return false;
-
-        return true;
-      })
-
-    .transition()
-      .duration(HIGHLIGHT_ANIMATION_DURATION)
-      .style('opacity', 0.1);
-  }
-
-  function unhighlightToneGenome() {
-    d3.select(vizId).selectAll('.g-block')
-      .transition()
-      .duration(HIGHLIGHT_ANIMATION_DURATION)
-      .style('opacity', 1);
-    d3.select(vizId).selectAll('.g-block-mixed-child')
-      .transition()
-      .duration(HIGHLIGHT_ANIMATION_DURATION)
-      .style('opacity', 1);
   }
 
   function processData(traits) {
@@ -526,29 +246,5 @@ $(document).ready(function() {
       traits.children.forEach(processData);
     }
   }
-
-  $('.metric-count').click(function setMetricCount() {
-    toneGenomeViz.layoutMetric('count');
-    mainViz.datum(CURRENT_TONE).call(toneGenomeViz);
-  });
-
-  $('.metric-percentile').click(function setMetricPercentile() {
-    toneGenomeViz.layoutMetric('percentile');
-    mainViz.datum(CURRENT_TONE).call(toneGenomeViz);
-  });
-
-  $('.nav-tabs a').click(function() {
-    setTimeout(function() {
-      if ($('#json').hasClass('active')) {
-        $visualization.hide();
-        $outputTextLabel.hide();
-        $outputText.hide();
-      } else {
-        $visualization.show();
-        $outputTextLabel.show();
-        $outputText.show();
-      }
-    }, 30);
-  });
 
 });
