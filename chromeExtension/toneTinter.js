@@ -1,5 +1,8 @@
+'use strict';
 
-// alert("hi");
+var Color = true;
+var Label = true;
+var Annotate = true;
 
 var toneToColor = 
   { Neutral:  "gray"
@@ -9,9 +12,6 @@ var toneToColor =
   , Angry:    "red"
   }
 
-  //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  // var params = 'text=' 
-  //   + encodeURI("I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours");
 function hitApi(endpoint, text, callback){
   var http = new XMLHttpRequest();
   var url = "https://tone-analyzer-cs252.mybluemix.net/" + endpoint;
@@ -34,37 +34,9 @@ function fetchMood(text, callback){
 function fetchToneAnalysis(text, callback){
   hitApi("tone", text, callback);
 }
-
 // s = "I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours";
 // fetchMood(s, function(response){ alert(response.responseText); } );
 
-var regularPage = 
-  { matches: function(node){
-      // alert(node.nodeName);
-      if(node.nodeName == "P"){
-        //alert(node.textContent);
-        return true;
-      }else{
-        return false;
-      }
-    }
-  , matchFails: function(node){
-      return false;
-    }
-  , color: function(node){
-      // alert("coloring");
-      // node.style.color = "green";
-      // node.style.cssText = "color: green !important";
-      var text = node.innerText;
-      // node.innerText += "#" + (textLen * 2000); // textLen;
-      //node.style.color = "rgb(" + text.length + ", 0, 0)";
-      fetchMood(text, function(response){
-          mood = JSON.parse(response.responseText).mood;
-          //alert(mood + ":" + toneToColor[mood]);
-          node.style.color = toneToColor[mood];
-      });
-    }
-  }
 
 
 // returns a page type item t with three functions:
@@ -74,8 +46,6 @@ var regularPage =
 function getPageType(){
   return regularPage;
 }
-
-var pageType = getPageType();
 
 function colorTraverse(node){
   if(pageType.matches(node)){ //if the node is what we want to color, color it
@@ -88,5 +58,60 @@ function colorTraverse(node){
   }
 }
 
-colorTraverse(document.body);
 
+
+//
+//Page specific supports
+//
+
+var defaultMatch = 
+  function(node){
+    // alert(node.nodeName);
+    if(node.nodeName == "P"){
+        //alert(node.textContent);
+        return true;
+    }else{
+        return false;
+    }
+  };
+
+var defaultFail = 
+  function(node){
+    return false;
+  }
+
+var defaultColor = 
+  function(node){
+    // node.style.cssText = "color: green !important";
+    var text = node.innerText;
+    fetchMood(text, function(response){
+      var mood = JSON.parse(response.responseText).mood;
+      //alert(mood + ":" + toneToColor[mood]);
+      if(Color){
+        node.style.color = toneToColor[mood];
+      }
+      if(Annotate){
+        var annotate = "<div class='tone-tinter-label'>((" + mood + "))</div>";
+        //alert(annotate);
+        node.innerHTML = annotate + node.innerHTML;
+      }
+    });
+  };
+
+
+
+var regularPage = 
+  { matches: defaultMatch
+  , matchFails: defaultFail
+  , color: defaultColor
+  }
+
+
+
+
+//
+//launch the stuff
+//
+var pageType = getPageType();
+
+colorTraverse(document.body);

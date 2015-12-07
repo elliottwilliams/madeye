@@ -1,10 +1,28 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
   <title> Poppy bob </title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
+      font-size: 100%;
+    }
+    #status {
+      /* avoid an excessively wide status text */
+      white-space: pre;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 400px;
+    }
+  </style>
+  <script src="popup.js"></script>
 </head>
 <body>
-  <input type="checkbox" name="vehicle" value="Bike">
-  <label> Analyse tone on this page </label>
+  <div id="status">
+    <input type="checkbox" name="Color" value="Color">
+    <label> Color page elements by tone </label>
+  </div>
 </body>
 </html>
+
+
