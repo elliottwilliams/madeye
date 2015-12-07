@@ -1,36 +1,42 @@
 
 // alert("hi");
 
-var toneClass = 
-  { angry: "red"
-  , happy: "light-blue"
-  };
+var toneToColor = 
+  { Neutral:  "gray"
+  , Happy:    "chartreuse"
+  , Excited:  "orange"
+  , Sad:      "darkslateblue"
+  , Angry:    "red"
+  }
 
-
-function fetchTone(callback){
-  var http = new XMLHttpRequest();
-  var url = "http://tone-analyzer-cs252.mybluemix.net/mood";
+  //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   // var params = 'text=' 
   //   + encodeURI("I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours");
-  var params = 'text=what+the+fuck';
+function hitApi(endpoint, text, callback){
+  var http = new XMLHttpRequest();
+  var url = "https://tone-analyzer-cs252.mybluemix.net/" + endpoint;
+  var params = 'text=' + encodeURIComponent(text).replace(/%20/g, '+');
   http.open("POST", url, true);
 
-  //Send the proper header information along with the request
-  //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  //http.setRequestHeader("text", 
-  //    "I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours");
   http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
   http.onreadystatechange = function() {//Call a function when the state changes.
     if(http.readyState == 4 && http.status == 200) {
-      alert(http.responseText);
-      //callback();
+      //alert(http.responseText);
+      callback(http);
     }
   }
   http.send(params);
 }
+function fetchMood(text, callback){
+  hitApi("mood", text, callback);
+}
+function fetchToneAnalysis(text, callback){
+  hitApi("tone", text, callback);
+}
 
-fetchTone(function(){});
+// s = "I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours";
+// fetchMood(s, function(response){ alert(response.responseText); } );
 
 var regularPage = 
   { matches: function(node){
@@ -49,9 +55,14 @@ var regularPage =
       // alert("coloring");
       // node.style.color = "green";
       // node.style.cssText = "color: green !important";
-      var textLen = node.innerText.length;
+      var text = node.innerText;
       // node.innerText += "#" + (textLen * 2000); // textLen;
-      node.style.color = "rgb(" + textLen + ", 0, 0)";
+      //node.style.color = "rgb(" + text.length + ", 0, 0)";
+      fetchMood(text, function(response){
+          mood = JSON.parse(response.responseText).mood;
+          //alert(mood + ":" + toneToColor[mood]);
+          node.style.color = toneToColor[mood];
+      });
     }
   }
 
