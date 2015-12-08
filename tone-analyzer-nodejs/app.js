@@ -27,13 +27,19 @@ require('./config/express')(app);
 
 var credentials = extend({
   version: 'v2-experimental',
-  username: '7b6f9a0f-bd8b-4842-b7fb-538ab277597e',//TODO: <username>
-  password: 'CLsE2ELfKSkz'//TODO: <password>
+  username: '',
+  password: ''
+  //username: '7b6f9a0f-bd8b-4842-b7fb-538ab277597e',//TODO: <username>
+  //password: 'CLsE2ELfKSkz'//TODO: <password>
 }, bluemix.getServiceCreds('tone_analyzer'));
 
 
 // Create the service wrapper
 var toneAnalyzer = watson.tone_analyzer(credentials);
+
+app.use(function(req, res) {
+    res.set('Access-Control-Allow-Origin', '*');
+});
 
 // render index page
 app.get('/', function(req, res) {
