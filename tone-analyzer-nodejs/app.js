@@ -19,8 +19,9 @@
 var express = require('express'),
   app       = express(),
   bluemix   = require('./config/bluemix'),
-  extend    = require('util')._extend,
-  watson    = require('watson-developer-cloud');
+  watson    = require('watson-developer-cloud'),
+  fs        = require('fs'),
+  extend    = require('util-extend');
 
 // Bootstrap application settings
 require('./config/express')(app);
@@ -33,12 +34,19 @@ var credentials = extend({
   //password: 'CLsE2ELfKSkz'//TODO: <password>
 }, bluemix.getServiceCreds('tone_analyzer'));
 
+try {
+    fs.accessSync('./config/emw.js');
+    var emw = require('./config/emw');
+    credentials = extend(credentials, emw.bluemix);
+    console.log('using emw credentials');
+} catch (e) {}
 
 // Create the service wrapper
 var toneAnalyzer = watson.tone_analyzer(credentials);
 
-app.use(function(req, res) {
+app.use(function(req, res, next) {
     res.set('Access-Control-Allow-Origin', '*');
+    next();
 });
 
 // render index page
