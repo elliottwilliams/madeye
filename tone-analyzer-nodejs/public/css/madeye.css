@@ -285,22 +285,20 @@ body {
   -webkit-transition: background-color 500ms, color 500ms;
   -moz-transition: background-color 500ms, color 500ms;
   transition: background-color 500ms, color 500ms;
-}
-.ui {
   background-color: #39CCCC;
   color: #fff;
 }
-.ui.happy {
+body.happy {
   background-color: #FFDC00;
   color: #111;
 }
-.ui.excited {
+body.excited {
   background-color: #FF4136;
 }
-.ui.sad {
+body.sad {
   background-color: #3D9970;
 }
-.ui.angry {
+body.angry {
   background-color: #FF4136;
 }
 .ui,
@@ -325,7 +323,8 @@ a:not(.pure-menu-link):visited {
   color: #0074D9;
 }
 .logo {
-  background: url("../image/eye.gif") center no-repeat;
+  background: url("../image/corgi.svg") center no-repeat;
+  background-size: 8em;
   height: 9em;
   width: 100%;
   margin: 2em 0;
@@ -412,4 +411,5 @@ hr {
 .fixed-at-top {
   position: fixed;
   top: 0;
+  max-width: 45em;
 }

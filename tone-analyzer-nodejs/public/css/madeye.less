@@ -5,9 +5,6 @@ body {
     -webkit-transition: background-color 500ms, color 500ms;
     -moz-transition: background-color 500ms, color 500ms;
     transition: background-color 500ms, color 500ms;
-}
-
-.ui {
     .bg-teal();
     .white();
 
@@ -17,6 +14,7 @@ body {
     &.sad { .bg-olive(); }
     &.angry { .bg-red(); }
 }
+
 .ui, article {
     max-width: 45em;
     margin: 0 auto;
@@ -40,7 +38,8 @@ a:not(.pure-menu-link) {
 }
 
 .logo {
-    background: url("../image/eye.gif") center no-repeat;
+    background: url("../image/corgi.svg") center no-repeat;
+    background-size: 8em;
     height: 9em;
     width: 100%;
 
@@ -136,4 +135,5 @@ hr {
 .fixed-at-top {
     position: fixed;
     top: 0;
+    max-width: 45em;
 }

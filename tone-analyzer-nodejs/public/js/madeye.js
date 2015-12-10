@@ -175,8 +175,8 @@ function setClassAtTopDirective($window) {
             'application/x-www-form-urlencoded';
     });
 
-    //app.value('server', '//tone-analyzer-cs252.mybluemix.net'); 
-    app.value('server', 'http://localhost:3000'); 
+    app.value('server', '//tone-analyzer-cs252.mybluemix.net'); 
+    //app.value('server', 'http://localhost:3000'); 
 
     app.filter('htmlToPlaintext', function() {
         return function(text) {
