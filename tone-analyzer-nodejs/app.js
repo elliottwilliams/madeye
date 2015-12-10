@@ -1,19 +1,3 @@
-/**
- * Copyright 2015 IBM Corp. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 'use strict';
 
 var express = require('express'),
@@ -43,6 +27,7 @@ try {
 // Create the service wrapper
 var toneAnalyzer = watson.tone_analyzer(credentials);
 
+// Get the db credentials all set up so we can connect.
 var dbcreds = JSON.parse(process.env.VCAP_SERVICES)['sqldb'][0]['credentials'];
 var dbConnString = "DRIVER={DB2};DATABASE="+dbcreds.db+
                        ";UID="+dbcreds.username+
@@ -60,15 +45,12 @@ app.get('/', function(req, res) {
   res.render('index');
 });
 
+// Our actual important endpoint. This is mainly what our extension uses.
 app.post('/mood', function(req, res, next) {
   toneAnalyzer.tone(req.body, function(err, data) {
     if (err) {
       return next(err);
     } else {
-
-      //var text = '{ "text": "' + req.body.text + '",' + makeJSON(data) + '"emotion":<put stuff here> }'; 
-      //return res.send(text)
-
       ibmdb.open(dbConnString, function(err, conn) {
   
         if(err) {
@@ -79,16 +61,15 @@ app.post('/mood', function(req, res, next) {
 
         var rows = conn.querySync("SELECT * FROM data");
 
-        console.log("STUFF: " + rows[0].ID);
         // For each of our example data
         var minInd = 0;
         var minVal = 1000000;
         for (var r in rows) {
+          // Compare and find the closest match.
           var compare = compareMoods(data, rows[r]);
           if (compare < minVal) {
             minInd = r;
             minVal = compare;
-            //console.log(obj.data[s].emotion);
           }
         }
         conn.closeSync();
@@ -98,6 +79,7 @@ app.post('/mood', function(req, res, next) {
   })
 })
 
+// Just in case we need to get the tone of words.
 app.post('/tone', function(req, res, next) {
   toneAnalyzer.tone(req.body, function(err, data) {
     if (err)
@@ -107,6 +89,7 @@ app.post('/tone', function(req, res, next) {
   });
 });
 
+// Just in case we need to get synonyms.
 app.get('/synonyms', function(req, res, next) {
   toneAnalyzer.synonym(req.query, function(err, data) {
     if (err)
@@ -123,6 +106,7 @@ var port = process.env.VCAP_APP_PORT || 3000;
 app.listen(port);
 console.log('listening at:', port);
 
+// Helper methods for sorting through moods entries and comparing them.
 function compareMoods(data, comp) {
   if (data.children === undefined) {
     switch (data.name) {
