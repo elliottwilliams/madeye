@@ -28,10 +28,8 @@ require('./config/express')(app);
 
 var credentials = extend({
   version: 'v2-experimental',
-  username: '',
-  password: ''
-  //username: '7b6f9a0f-bd8b-4842-b7fb-538ab277597e',//TODO: <username>
-  //password: 'CLsE2ELfKSkz'//TODO: <password>
+  username: '7b6f9a0f-bd8b-4842-b7fb-538ab277597e',//TODO: <username>
+  password: 'CLsE2ELfKSkz'//TODO: <password>
 }, bluemix.getServiceCreds('tone_analyzer'));
 
 try {
@@ -59,8 +57,27 @@ app.post('/mood', function(req, res, next) {
     if (err) {
       return next(err);
     } else {
+
+      //var text = '{ "text": "' + req.body.text + '",' + makeJSON(data) + '"emotion":<put stuff here> }'; 
+      //return res.send(text)
+
       // Now let's figure out what mood to send
-      return res.json({ mood: getMood(data) });
+      var fs = require('fs');
+      var obj = JSON.parse(fs.readFileSync('data.json', 'utf8'));
+
+      // For each of our example data
+      var minInd = 0;
+      var minVal = 1000000;
+      for (var s in obj.data) {
+        var compare = compareMoods(data, obj.data[s]);
+        if (compare < minVal) {
+          minInd = s;
+          minVal = compare;
+          console.log(obj.data[s].emotion);
+        }
+      }
+
+      return res.json({ mood: obj.data[minInd].emotion });
     }
   })
 })
@@ -90,56 +107,34 @@ var port = process.env.VCAP_APP_PORT || 3000;
 app.listen(port);
 console.log('listening at:', port);
 
-
-function getMood(data) {
-  var score = getMoodScore(data);
-  var s = score / 5;
-  
-  if (s >= -1 && s <= 1) {
-    return "Neutral";
-  } else if (s > 0) {
-    if (s <= 12)
-      return "Happy";
-    else
-      return "Excited";
-  } else {//if (s < 0) {
-    if (s >= -12)
-      return "Sad";
-    else
-      return "Angry";
-  }
-}
-
-function getMoodScore(data) {
+function compareMoods(data, comp) {
   if (data.children === undefined) {
     switch (data.name) {
       case "Cheerfulness":
-        return 50 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Cheerfulness);
       case "Negative":
-        return -50 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Negative);
       case "Anger":
-        return -50 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Anger);
       case "Analytical":
-        return -10 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Analytical);
       case "Confident":
-        return 25 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Confident);
       case "Tentative":
-        return -25 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Tentative);
       case "Openness":
-        return 17 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Openness);
       case "Agreeableness":
-        return 17 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Agreeableness);
       case "Conscientiousness":
-        return 17 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.Conscientiousness);
     }
     return 0;
   }
 
   var sum = 0.0;
   for (var s in data.children) {
-    sum += getMoodScore(data.children[s]);
+    sum += compareMoods(data.children[s], comp);
   }
-  console.log(sum);
   return sum;
 }
-
