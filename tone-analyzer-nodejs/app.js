@@ -21,15 +21,16 @@ var express = require('express'),
   bluemix   = require('./config/bluemix'),
   watson    = require('watson-developer-cloud'),
   fs        = require('fs'),
-  extend    = require('util-extend');
+  extend    = require('util-extend'),
+  ibmdb     = require('ibm_db');
 
 // Bootstrap application settings
 require('./config/express')(app);
 
 var credentials = extend({
   version: 'v2-experimental',
-  username: '7b6f9a0f-bd8b-4842-b7fb-538ab277597e',//TODO: <username>
-  password: 'CLsE2ELfKSkz'//TODO: <password>
+  username: '<username>',//TODO: <username>
+  password: '<password>'//TODO: <password>
 }, bluemix.getServiceCreds('tone_analyzer'));
 
 try {
@@ -41,6 +42,13 @@ try {
 
 // Create the service wrapper
 var toneAnalyzer = watson.tone_analyzer(credentials);
+
+var dbcreds = JSON.parse(process.env.VCAP_SERVICES)['sqldb'][0]['credentials'];
+var dbConnString = "DRIVER={DB2};DATABASE="+dbcreds.db+
+                       ";UID="+dbcreds.username+
+                       ";PWD="+dbcreds.password+
+                       ";HOSTNAME="+dbcreds.host+
+                       ";port="+dbcreds.port;
 
 app.use(function(req, res, next) {
     res.set('Access-Control-Allow-Origin', '*');
@@ -61,23 +69,31 @@ app.post('/mood', function(req, res, next) {
       //var text = '{ "text": "' + req.body.text + '",' + makeJSON(data) + '"emotion":<put stuff here> }'; 
       //return res.send(text)
 
-      // Now let's figure out what mood to send
-      var fs = require('fs');
-      var obj = JSON.parse(fs.readFileSync('data.json', 'utf8'));
-
-      // For each of our example data
-      var minInd = 0;
-      var minVal = 1000000;
-      for (var s in obj.data) {
-        var compare = compareMoods(data, obj.data[s]);
-        if (compare < minVal) {
-          minInd = s;
-          minVal = compare;
-          console.log(obj.data[s].emotion);
+      ibmdb.open(dbConnString, function(err, conn) {
+  
+        if(err) {
+          console.error("db connection error: ", err.message);
+          console.log("Not surprisingly, we failed to connect to the db");
+          return;
         }
-      }
 
-      return res.json({ mood: obj.data[minInd].emotion });
+        var rows = conn.querySync("SELECT * FROM data");
+
+        console.log("STUFF: " + rows[0].ID);
+        // For each of our example data
+        var minInd = 0;
+        var minVal = 1000000;
+        for (var r in rows) {
+          var compare = compareMoods(data, rows[r]);
+          if (compare < minVal) {
+            minInd = r;
+            minVal = compare;
+            //console.log(obj.data[s].emotion);
+          }
+        }
+        conn.closeSync();
+        return res.json({ mood: rows[minInd].EMOTION });
+      });
     }
   })
 })
@@ -111,23 +127,23 @@ function compareMoods(data, comp) {
   if (data.children === undefined) {
     switch (data.name) {
       case "Cheerfulness":
-        return Math.abs(data.normalized_score - comp.Cheerfulness);
+        return Math.abs(data.normalized_score - comp.CHEERFULNESS);
       case "Negative":
-        return Math.abs(data.normalized_score - comp.Negative);
+        return Math.abs(data.normalized_score - comp.NEGATIVE);
       case "Anger":
-        return Math.abs(data.normalized_score - comp.Anger);
+        return Math.abs(data.normalized_score - comp.ANGER);
       case "Analytical":
-        return Math.abs(data.normalized_score - comp.Analytical);
+        return Math.abs(data.normalized_score - comp.ANALYTICAL);
       case "Confident":
-        return Math.abs(data.normalized_score - comp.Confident);
+        return Math.abs(data.normalized_score - comp.CONFIDENT);
       case "Tentative":
-        return Math.abs(data.normalized_score - comp.Tentative);
+        return Math.abs(data.normalized_score - comp.TENTATIVE);
       case "Openness":
-        return Math.abs(data.normalized_score - comp.Openness);
+        return Math.abs(data.normalized_score - comp.OPENNESS);
       case "Agreeableness":
-        return Math.abs(data.normalized_score - comp.Agreeableness);
+        return Math.abs(data.normalized_score - comp.AGREEABLENESS);
       case "Conscientiousness":
-        return Math.abs(data.normalized_score - comp.Conscientiousness);
+        return Math.abs(data.normalized_score - comp.CONSCIENTIOUSNESS);
     }
     return 0;
   }
