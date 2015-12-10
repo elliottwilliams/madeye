@@ -1,0 +1,139 @@
+@import "../bower_components/Colors/less/colors";
+
+body {
+    font: 18px/1.5 "Avenir Next", "Avenir", "Helvetica", "Arial", sans-serif;
+    -webkit-transition: background-color 500ms, color 500ms;
+    -moz-transition: background-color 500ms, color 500ms;
+    transition: background-color 500ms, color 500ms;
+}
+
+.ui {
+    .bg-teal();
+    .white();
+
+    &.neutral { }
+    &.happy { .bg-yellow(); .black(); }
+    &.excited { .bg-red(); }
+    &.sad { .bg-olive(); }
+    &.angry { .bg-red(); }
+}
+.ui, article {
+    max-width: 45em;
+    margin: 0 auto;
+    padding: 4em 2em;
+}
+article {
+    .bg-white();
+    .black();
+    padding: 1.2em 1em;
+}
+
+
+p {
+    margin: 3em 0;
+}
+
+a:not(.pure-menu-link) {
+    &, &:link, &:hover, &:active, &:visited {
+        .blue();
+    }
+}
+
+.logo {
+    background: url("../image/eye.gif") center no-repeat;
+    height: 9em;
+    width: 100%;
+
+    margin: 2em 0;
+}
+
+header {
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+}
+h1, h2 {
+    text-align: center;
+}
+
+.mood {
+    text-align: center;
+    margin-bottom: 5em;
+}
+.mood-word {
+    font-family: 'Knewave', cursive;
+    font-size: 8em;
+}
+
+.pure-menu {
+    margin: 0 auto;
+    text-align: center;
+
+    .pure-menu-link {
+        color: inherit;
+        &:hover { .black(); }
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .pure-menu-list {
+        display: inline;
+    }
+}
+
+
+form {
+    margin: 1em 0 3em;
+}
+input, button {
+    .black();
+    font-size: 0.7em;
+    margin: 0 0 1.5em;
+    width: 100%;
+}
+label {
+    display: block;
+}
+textarea {
+    width: 100%;
+    font-size: 0.7em;
+    .black();
+    .bordered();
+}
+
+.bordered {
+    border: 2px solid #ddd;
+    .border--silver();
+}
+
+.pure-button {
+    display: block;
+    width: 100%;
+    border-radius: 0;
+
+    &:hover {
+        .bg-silver();
+    }
+}
+
+.word-list li{
+    display: inline-block;
+    .white();
+    .bg-black();
+    padding: 0.8em 1em;
+    margin: 0.1em;
+}
+ul.word-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: -4.1em;
+}
+
+hr {
+    border-style: solid;
+    .border--silver();
+}
+
+.fixed-at-top {
+    position: fixed;
+    top: 0;
+}
