@@ -72,14 +72,15 @@ function readArticleFactory($q, $http, server) {
 }
 
 
-function textBasedController($scope, analyze, $anchorScroll) {
+function textBasedController($scope, analyze, $location, $anchorScroll) {
     $scope.submit = function() {
         $scope.loading = true;
         analyze($scope.text, '/tone')
         .then(function(tone) {
             $scope.updateMood(getMood(tone));
             $scope.setColoring(produceToneColoring(tone));
-            $anchorScroll('mood');
+            $location.hash('mood');
+            $anchorScroll();
         }).finally(function() {
             $scope.loading = false;
         });
@@ -90,7 +91,7 @@ function textBasedController($scope, analyze, $anchorScroll) {
     });
 }
 
-function urlBasedController($scope, readArticle, analyze, $anchorScroll) {
+function urlBasedController($scope, readArticle, analyze, $location, $anchorScroll) {
     $scope.submit = function() {
         $scope.loading = true;
         readArticle($scope.url).then(function(content) {
@@ -100,7 +101,8 @@ function urlBasedController($scope, readArticle, analyze, $anchorScroll) {
             var mood = getMood(tone);
             $scope.updateMood(mood);
             $scope.setColoring(produceToneColoring(tone));
-            $anchorScroll('mood');
+            $location.hash('mood');
+            $anchorScroll();
         }).finally(function() {
             $scope.loading = false;
         });
