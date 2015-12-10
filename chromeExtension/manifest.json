@@ -16,8 +16,7 @@
           , "http://*/*"
           ]
       , "js": 
-          [ "options.js"
-          , "toneTinter.js"
+          [ "toneTinter.js"
           ]
       , "css": [ "toneTinter.css" ]
       , "run_at": "document_end"

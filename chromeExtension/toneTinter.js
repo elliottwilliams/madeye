@@ -1,6 +1,7 @@
+alert("by");
+
 'use strict';
 
-alert("by");
 
 var Color;
 var Label;
@@ -37,8 +38,6 @@ function fetchMood(text, callback){
 function fetchToneAnalysis(text, callback){
   hitApi("tone", text, callback);
 }
-// s = "I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours";
-// fetchMood(s, function(response){ alert(response.responseText); } );
 
 
 
@@ -129,20 +128,24 @@ function lineMatch(text, locat){
 var pageType = getPageType();
 
 // alert("x");
-chrome.storage.sync.get
-( { tone_tinter_color: true
-  , tone_tinter_label: false
-  , tone_tinter_annotate: false
-  , tone_tinter_sites: "twitter.com"
-  }
-, function(tone) {
-    Color = tone.tone_tinter_color;
-    Label = tone.tone_tinter_label;
-    Annotate = tone.tone_tinter_annotate;
-    // alert(tone.tone_tinter_sites);
-    if(lineMatch(tone.tone_tinter_sites, window.location)){
-      // alert("hi");
-      colorTraverse(document.body);
+function launch(){
+  chrome.storage.sync.get
+  ( { tone_tinter_color: true
+    , tone_tinter_label: false
+    , tone_tinter_annotate: false
+    , tone_tinter_sites: "twitter.com"
     }
-  }
-);
+  , function(tone) {
+      Color = tone.tone_tinter_color;
+      Label = tone.tone_tinter_label;
+      // Annotate = tone.tone_tinter_annotate;
+      // alert(tone.tone_tinter_sites);
+      if(lineMatch(tone.tone_tinter_sites, window.location)){
+        // alert("hi");
+        colorTraverse(document.body);
+      }
+    }
+  );
+}
+launch();
+window.onhashchange = launch;
