@@ -1,4 +1,4 @@
-alert("by");
+//alert("by");
 
 'use strict';
 
@@ -140,7 +140,8 @@ function launch(){
       Label = tone.tone_tinter_label;
       // Annotate = tone.tone_tinter_annotate;
       // alert(tone.tone_tinter_sites);
-      if(lineMatch(tone.tone_tinter_sites, window.location)){
+      if( (Color || Label)
+          && lineMatch(tone.tone_tinter_sites, window.location)){
         // alert("hi");
         colorTraverse(document.body);
       }
@@ -148,4 +149,4 @@ function launch(){
   );
 }
 launch();
-window.onhashchange = launch;
+// window.onhashchange = launch;

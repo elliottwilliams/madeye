@@ -6,12 +6,12 @@ function insert(){
 function save_options() {
   var color = document.getElementById('color').checked;
   var label = document.getElementById('label').checked;
-  var annotate = document.getElementById('annotate').checked;
+  // var annotate = document.getElementById('annotate').checked;
   var sites = document.getElementById('sites').value;
   chrome.storage.sync.set
   ( { tone_tinter_color: color
     , tone_tinter_label: label
-    , tone_tinter_annotate: annotate
+    // , tone_tinter_annotate: annotate
     , tone_tinter_sites: sites 
     }
   , function() {
@@ -35,13 +35,13 @@ function restore_options() {
   chrome.storage.sync.get
   ( { tone_tinter_color: true
     , tone_tinter_label: false
-    , tone_tinter_annotate: false
+    // , tone_tinter_annotate: false
     , tone_tinter_sites: "twitter.com"
     }
   , function(tone) {
       document.getElementById('color').checked = tone.tone_tinter_color;
       document.getElementById('label').checked = tone.tone_tinter_label;
-      document.getElementById('annotate').checked = tone.tone_tinter_annotate;
+      // document.getElementById('annotate').checked = tone.tone_tinter_annotate;
       document.getElementById('sites').value = tone.tone_tinter_sites;
     }
   );
