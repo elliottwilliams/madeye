@@ -6,6 +6,7 @@
     "body-parser": "~1.14.1",
     "errorhandler": "~1.4.2",
     "express": "~4.13.3",
+    "ibm_db": "0.0.15",
     "jade": "~1.11.0",
     "util-extend": "^1.0.1",
     "watson-developer-cloud": "~1.0.5"
