@@ -21,7 +21,11 @@ var express = require('express'),
   bluemix   = require('./config/bluemix'),
   watson    = require('watson-developer-cloud'),
   fs        = require('fs'),
+  http      = require('http'),
   extend    = require('util-extend');
+
+// Secrets
+var READABILITY_TOKEN = '5e36b69b9e384c9a82ed4abdf042984b3cfb22e4';
 
 // Bootstrap application settings
 require('./config/express')(app);
@@ -44,17 +48,17 @@ try {
 // Create the service wrapper
 var toneAnalyzer = watson.tone_analyzer(credentials);
 
-app.use(function(req, res, next) {
+function csrfEnable(req, res, next) {
     res.set('Access-Control-Allow-Origin', '*');
     next();
-});
+}
 
 // render index page
 app.get('/', function(req, res) {
   res.render('index');
 });
 
-app.post('/mood', function(req, res, next) {
+app.post('/mood', csrfEnable, function(req, res, next) {
   toneAnalyzer.tone(req.body, function(err, data) {
     if (err) {
       return next(err);
@@ -65,7 +69,7 @@ app.post('/mood', function(req, res, next) {
   })
 })
 
-app.post('/tone', function(req, res, next) {
+app.post('/tone', csrfEnable, function(req, res, next) {
   toneAnalyzer.tone(req.body, function(err, data) {
     if (err)
       return next(err);
@@ -74,13 +78,36 @@ app.post('/tone', function(req, res, next) {
   });
 });
 
-app.get('/synonyms', function(req, res, next) {
+app.get('/synonyms', csrfEnable, function(req, res, next) {
   toneAnalyzer.synonym(req.query, function(err, data) {
     if (err)
       return next(err);
     else
       return res.json(data);
   });
+});
+
+app.get('/read', csrfEnable, function(req, res, next) {
+    var url = req.query.url;
+    console.log(url);
+    if (!url) {
+        return res.status(400).send('No url passed');
+    }
+    http.get('http://fuckyeahmarkdown.com/go/?u=' + encodeURIComponent(url) +
+            '&read=1&md=1', function(read) {
+
+        var body = '';
+        read.on('data', function(d) {
+            body += d;
+        }).on('end', function() {
+            res.status(read.statusCode);
+            res.set('Content-Type', 'application/json');
+            res.end(body);
+        });
+
+    }).on('error', function(err) {
+        res.status(500).send(err);
+    });
 });
 
 // error-handler settings
