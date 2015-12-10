@@ -92,7 +92,7 @@ $(document).ready(function() {
 
     /*$.post('/mood', {'text': text })
       .done(function(response) {
-        console.log(JSON.stringify(response, null, 2));
+        console.log(response);//JSON.stringify(response, null, 2));
       })
       .fail(onAPIError)
       .always (function(){

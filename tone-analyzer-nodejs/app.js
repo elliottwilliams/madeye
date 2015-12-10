@@ -1,19 +1,3 @@
-/**
- * Copyright 2015 IBM Corp. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 'use strict';
 
 var express = require('express'),
@@ -22,7 +6,8 @@ var express = require('express'),
   watson    = require('watson-developer-cloud'),
   fs        = require('fs'),
   http      = require('http'),
-  extend    = require('util-extend');
+  extend    = require('util-extend'),
+  ibmdb     = require('ibm_db');
 
 // Secrets
 var READABILITY_TOKEN = '5e36b69b9e384c9a82ed4abdf042984b3cfb22e4';
@@ -32,10 +17,8 @@ require('./config/express')(app);
 
 var credentials = extend({
   version: 'v2-experimental',
-  username: '',
-  password: ''
-  //username: '7b6f9a0f-bd8b-4842-b7fb-538ab277597e',//TODO: <username>
-  //password: 'CLsE2ELfKSkz'//TODO: <password>
+  username: '<username>',//TODO: <username>
+  password: '<password>'//TODO: <password>
 }, bluemix.getServiceCreds('tone_analyzer'));
 
 try {
@@ -52,23 +35,54 @@ function csrfEnable(req, res, next) {
     res.set('Access-Control-Allow-Origin', '*');
     next();
 }
+// Get the db credentials all set up so we can connect.
+var dbcreds = JSON.parse(process.env.VCAP_SERVICES)['sqldb'][0]['credentials'];
+var dbConnString = "DRIVER={DB2};DATABASE="+dbcreds.db+
+                       ";UID="+dbcreds.username+
+                       ";PWD="+dbcreds.password+
+                       ";HOSTNAME="+dbcreds.host+
+                       ";port="+dbcreds.port;
 
 // render index page
 app.get('/', function(req, res) {
   res.render('index');
 });
 
+// Our actual important endpoint. This is mainly what our extension uses.
 app.post('/mood', csrfEnable, function(req, res, next) {
   toneAnalyzer.tone(req.body, function(err, data) {
     if (err) {
       return next(err);
     } else {
-      // Now let's figure out what mood to send
-      return res.json({ mood: getMood(data) });
+      ibmdb.open(dbConnString, function(err, conn) {
+  
+        if(err) {
+          console.error("db connection error: ", err.message);
+          console.log("Not surprisingly, we failed to connect to the db");
+          return;
+        }
+
+        var rows = conn.querySync("SELECT * FROM data");
+
+        // For each of our example data
+        var minInd = 0;
+        var minVal = 1000000;
+        for (var r in rows) {
+          // Compare and find the closest match.
+          var compare = compareMoods(data, rows[r]);
+          if (compare < minVal) {
+            minInd = r;
+            minVal = compare;
+          }
+        }
+        conn.closeSync();
+        return res.json({ mood: rows[minInd].EMOTION });
+      });
     }
   })
 })
 
+// Just in case we need to get the tone of words.
 app.post('/tone', csrfEnable, function(req, res, next) {
   toneAnalyzer.tone(req.body, function(err, data) {
     if (err)
@@ -78,6 +92,7 @@ app.post('/tone', csrfEnable, function(req, res, next) {
   });
 });
 
+// Just in case we need to get synonyms.
 app.get('/synonyms', csrfEnable, function(req, res, next) {
   toneAnalyzer.synonym(req.query, function(err, data) {
     if (err)
@@ -117,56 +132,35 @@ var port = process.env.VCAP_APP_PORT || 3000;
 app.listen(port);
 console.log('listening at:', port);
 
-
-function getMood(data) {
-  var score = getMoodScore(data);
-  var s = score / 5;
-  
-  if (s >= -1 && s <= 1) {
-    return "Neutral";
-  } else if (s > 0) {
-    if (s <= 12)
-      return "Happy";
-    else
-      return "Excited";
-  } else {//if (s < 0) {
-    if (s >= -12)
-      return "Sad";
-    else
-      return "Angry";
-  }
-}
-
-function getMoodScore(data) {
+// Helper methods for sorting through moods entries and comparing them.
+function compareMoods(data, comp) {
   if (data.children === undefined) {
     switch (data.name) {
       case "Cheerfulness":
-        return 50 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.CHEERFULNESS);
       case "Negative":
-        return -50 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.NEGATIVE);
       case "Anger":
-        return -50 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.ANGER);
       case "Analytical":
-        return -10 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.ANALYTICAL);
       case "Confident":
-        return 25 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.CONFIDENT);
       case "Tentative":
-        return -25 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.TENTATIVE);
       case "Openness":
-        return 17 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.OPENNESS);
       case "Agreeableness":
-        return 17 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.AGREEABLENESS);
       case "Conscientiousness":
-        return 17 * data.normalized_score;
+        return Math.abs(data.normalized_score - comp.CONSCIENTIOUSNESS);
     }
     return 0;
   }
 
   var sum = 0.0;
   for (var s in data.children) {
-    sum += getMoodScore(data.children[s]);
+    sum += compareMoods(data.children[s], comp);
   }
-  console.log(sum);
   return sum;
 }
-
