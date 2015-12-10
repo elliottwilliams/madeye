@@ -1,17 +1,21 @@
+//alert("by");
 
-// alert("hi");
+'use strict';
+
+
+var Color;
+var Label;
+var Annotate;
 
 var toneToColor = 
-  { Neutral:  "gray"
-  , Happy:    "chartreuse"
-  , Excited:  "orange"
-  , Sad:      "darkslateblue"
-  , Angry:    "red"
+  { neutral:     "gray"
+  , happy:       "chartreuse"
+  , excited:     "orange"
+  , sad:         "darkslateblue"
+  , angry:       "red"
+  , frustrated:  "purple"
   }
 
-  //http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  // var params = 'text=' 
-  //   + encodeURI("I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours");
 function hitApi(endpoint, text, callback){
   var http = new XMLHttpRequest();
   var url = "https://tone-analyzer-cs252.mybluemix.net/" + endpoint;
@@ -35,36 +39,6 @@ function fetchToneAnalysis(text, callback){
   hitApi("tone", text, callback);
 }
 
-// s = "I pray my dick gets big as the eiffel tower, so I can fuck the world for 72 hours";
-// fetchMood(s, function(response){ alert(response.responseText); } );
-
-var regularPage = 
-  { matches: function(node){
-      // alert(node.nodeName);
-      if(node.nodeName == "P"){
-        //alert(node.textContent);
-        return true;
-      }else{
-        return false;
-      }
-    }
-  , matchFails: function(node){
-      return false;
-    }
-  , color: function(node){
-      // alert("coloring");
-      // node.style.color = "green";
-      // node.style.cssText = "color: green !important";
-      var text = node.innerText;
-      // node.innerText += "#" + (textLen * 2000); // textLen;
-      //node.style.color = "rgb(" + text.length + ", 0, 0)";
-      fetchMood(text, function(response){
-          mood = JSON.parse(response.responseText).mood;
-          //alert(mood + ":" + toneToColor[mood]);
-          node.style.color = toneToColor[mood];
-      });
-    }
-  }
 
 
 // returns a page type item t with three functions:
@@ -74,8 +48,6 @@ var regularPage =
 function getPageType(){
   return regularPage;
 }
-
-var pageType = getPageType();
 
 function colorTraverse(node){
   if(pageType.matches(node)){ //if the node is what we want to color, color it
@@ -88,5 +60,93 @@ function colorTraverse(node){
   }
 }
 
-colorTraverse(document.body);
 
+
+//
+//Page specific supports
+//
+
+var defaultMatch = 
+  function(node){
+    // alert(node.nodeName);
+    if(node.nodeName == "P" && node.innerText.length > 30){
+        //alert(node.textContent);
+        return true;
+    }else{
+        return false;
+    }
+  };
+
+var defaultFail = 
+  function(node){
+    return false;
+  }
+
+var defaultColor = 
+  function(node){
+    // node.style.cssText = "color: green !important";
+    // node.style.color = 'red';
+    var text = node.innerText;
+    fetchMood(text, function(response){
+      var mood = JSON.parse(response.responseText).mood;
+      //alert(mood + ":" + toneToColor[mood]);
+      if(Color){
+        node.style.color = toneToColor[mood];
+      }
+      if(Label){
+        var annotate = "<div class='tone-tinter-label'>((" + mood + "))</div>";
+        //alert(annotate);
+        node.innerHTML = annotate + node.innerHTML;
+      }
+    });
+  };
+
+var regularPage = 
+  { matches: defaultMatch
+  , matchFails: defaultFail
+  , color: defaultColor
+  }
+
+
+
+function lineMatch(text, locat){
+  var lines = text.split("\n");
+  var loc = new String(locat);
+  for(var i=0; i<lines.length; i++){
+    if(lines[i].length > 0 
+        && loc.match(new RegExp(lines[i]))){
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//
+//launch the stuff
+//
+var pageType = getPageType();
+
+// alert("x");
+function launch(){
+  chrome.storage.sync.get
+  ( { tone_tinter_color: true
+    , tone_tinter_label: false
+    , tone_tinter_annotate: false
+    , tone_tinter_sites: "twitter.com"
+    }
+  , function(tone) {
+      Color = tone.tone_tinter_color;
+      Label = tone.tone_tinter_label;
+      // Annotate = tone.tone_tinter_annotate;
+      // alert(tone.tone_tinter_sites);
+      if( (Color || Label)
+          && lineMatch(tone.tone_tinter_sites, window.location)){
+        // alert("hi");
+        colorTraverse(document.body);
+      }
+    }
+  );
+}
+launch();
+// window.onhashchange = launch;
