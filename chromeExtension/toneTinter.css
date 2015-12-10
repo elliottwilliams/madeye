@@ -1,0 +1,11 @@
+.tone-tinter-label {
+  opacity: 0.7;
+}
+
+#tone-tinter-options {
+  position: fixed !important;
+  top: 0;
+  right: 0;
+  width: 100px; 
+  height: 100px; 
+}

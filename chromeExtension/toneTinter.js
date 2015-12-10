@@ -1,15 +1,18 @@
 'use strict';
 
-var Color = true;
-var Label = true;
-var Annotate = true;
+alert("by");
+
+var Color;
+var Label;
+var Annotate;
 
 var toneToColor = 
-  { Neutral:  "gray"
-  , Happy:    "chartreuse"
-  , Excited:  "orange"
-  , Sad:      "darkslateblue"
-  , Angry:    "red"
+  { neutral:     "gray"
+  , happy:       "chartreuse"
+  , excited:     "orange"
+  , sad:         "darkslateblue"
+  , angry:       "red"
+  , frustrated:  "purple"
   }
 
 function hitApi(endpoint, text, callback){
@@ -67,7 +70,7 @@ function colorTraverse(node){
 var defaultMatch = 
   function(node){
     // alert(node.nodeName);
-    if(node.nodeName == "P"){
+    if(node.nodeName == "P" && node.innerText.length > 30){
         //alert(node.textContent);
         return true;
     }else{
@@ -83,6 +86,7 @@ var defaultFail =
 var defaultColor = 
   function(node){
     // node.style.cssText = "color: green !important";
+    // node.style.color = 'red';
     var text = node.innerText;
     fetchMood(text, function(response){
       var mood = JSON.parse(response.responseText).mood;
@@ -90,15 +94,13 @@ var defaultColor =
       if(Color){
         node.style.color = toneToColor[mood];
       }
-      if(Annotate){
+      if(Label){
         var annotate = "<div class='tone-tinter-label'>((" + mood + "))</div>";
         //alert(annotate);
         node.innerHTML = annotate + node.innerHTML;
       }
     });
   };
-
-
 
 var regularPage = 
   { matches: defaultMatch
@@ -108,10 +110,39 @@ var regularPage =
 
 
 
+function lineMatch(text, locat){
+  var lines = text.split("\n");
+  var loc = new String(locat);
+  for(var i=0; i<lines.length; i++){
+    if(lines[i].length > 0 
+        && loc.match(new RegExp(lines[i]))){
+      return true;
+    }
+  }
+  return false;
+}
+
 
 //
 //launch the stuff
 //
 var pageType = getPageType();
 
-colorTraverse(document.body);
+// alert("x");
+chrome.storage.sync.get
+( { tone_tinter_color: true
+  , tone_tinter_label: false
+  , tone_tinter_annotate: false
+  , tone_tinter_sites: "twitter.com"
+  }
+, function(tone) {
+    Color = tone.tone_tinter_color;
+    Label = tone.tone_tinter_label;
+    Annotate = tone.tone_tinter_annotate;
+    // alert(tone.tone_tinter_sites);
+    if(lineMatch(tone.tone_tinter_sites, window.location)){
+      // alert("hi");
+      colorTraverse(document.body);
+    }
+  }
+);
