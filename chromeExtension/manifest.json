@@ -11,10 +11,6 @@
     [ "http://tone-analyzer-cs252.mybluemix.net/*"
     , "storage"
     ]
-, "background":
-    { "scripts": ["background.js"]
-    , "persistent": false
-    }
 , "options_page": "options.html"
 , "content_scripts":
     [ { "matches":
