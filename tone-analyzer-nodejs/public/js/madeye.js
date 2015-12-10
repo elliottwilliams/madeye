@@ -1,4 +1,4 @@
-/* globals angular, getMood, produceToneColoring */
+/* globals angular, produceToneColoring */
 
 function articleAppController($scope) {
 
@@ -77,8 +77,10 @@ function textBasedController($scope, analyze, $location, $anchorScroll) {
         $scope.loading = true;
         analyze($scope.text, '/tone')
         .then(function(tone) {
-            $scope.updateMood(getMood(tone));
             $scope.setColoring(produceToneColoring(tone));
+            return analyze($scope.text, '/mood');
+        }).then(function(data) {
+            $scope.updateMood(data.mood);
             $location.hash('mood');
             $anchorScroll();
         }).finally(function() {
@@ -98,9 +100,10 @@ function urlBasedController($scope, readArticle, analyze, $location, $anchorScro
             $scope.updateArticle(content);
             return analyze(content, '/tone');
         }).then(function(tone) {
-            var mood = getMood(tone);
-            $scope.updateMood(mood);
             $scope.setColoring(produceToneColoring(tone));
+            return analyze($scope.article, '/mood');
+        }).then(function(data) {
+            $scope.updateMood(data.mood);
             $location.hash('mood');
             $anchorScroll();
         }).finally(function() {
