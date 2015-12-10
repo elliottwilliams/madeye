@@ -1,6 +1,12 @@
 { "name": "Tone Tinter"
 , "description": "Somewhat accurate, injectable tone classification"
-, "version": "2.0"
+, "manifest_version": 2
+, "version": "1.0"
+, "icons": 
+    { "16": "corgi16.png"
+    , "48": "corgi48.png"
+    , "128": "corgi128.png" 
+    }
 , "permissions":
     [ "http://tone-analyzer-cs252.mybluemix.net/*"
     , "storage"
@@ -22,9 +28,4 @@
       , "run_at": "document_end"
       }
     ]
-/*, "browser_action":
-    { "default_title": "Annotate Documents by Tone"
-    , "default_popup": "popup.html"
-    } */
-, "manifest_version": 2
 }
