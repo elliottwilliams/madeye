@@ -9,9 +9,6 @@ var express = require('express'),
   extend    = require('util-extend'),
   ibmdb     = require('ibm_db');
 
-// Secrets
-var READABILITY_TOKEN = '5e36b69b9e384c9a82ed4abdf042984b3cfb22e4';
-
 // Bootstrap application settings
 require('./config/express')(app);
 
