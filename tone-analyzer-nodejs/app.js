@@ -9,8 +9,6 @@ var express = require('express'),
   extend    = require('util-extend'),
   ibmdb     = require('ibm_db');
 
-// Secrets
-
 // Bootstrap application settings
 require('./config/express')(app);
 
